@@ -106,7 +106,7 @@
     const sessionId = generateSessionId();
 
     try {
-        const response = await fetch('https://bolao-animal-game.workers.dev/', {
+        const response = await fetch('https://bolao-animal.bolaoanimal.workers.dev/', {
             method: 'POST',
             body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
             headers: { 'Content-Type': 'application/json' },
@@ -146,7 +146,7 @@
 
         async function playGame() {
     try {
-        const response = await fetch('https://bolao-animal-game.workers.dev/', {
+        const response = await fetch('https://bolao-animal.bolaoanimal.workers.dev/', {
             method: 'POST',
             body: JSON.stringify({ action: 'play', sessionId }),
             headers: { 'Content-Type': 'application/json' },
