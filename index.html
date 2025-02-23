@@ -102,27 +102,36 @@
         setDate();
 
         async function checkAccess() {
-            let inputCode = prompt("Digite o código de acesso:");
-            const sessionId = generateSessionId();
+    let inputCode = prompt("Digite o código de acesso:");
+    const sessionId = generateSessionId();
 
-            const response = await fetch('https://bolao-animal-game.workers.dev/', {
-                method: 'POST',
-                body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
-                headers: { 'Content-Type': 'application/json' },
-            });
+    try {
+        const response = await fetch('https://bolao-animal-game.workers.dev/', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
+            headers: { 'Content-Type': 'application/json' },
+        });
 
-            const data = await response.json();
-            if (data.error) {
-                alert(data.error);
-                if (data.error.includes("Acesso negado")) {
-                    document.body.innerHTML = "<h1>Acesso negado: Você já jogou hoje 😅!</h1>";
-                } else {
-                    location.reload();
-                }
-            } else {
-                document.getElementById("game").style.display = "block";
-            }
+        if (!response.ok) {
+            alert("Erro ao verificar o acesso: " + response.status);
+            return;
         }
+
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            if (data.error.includes("Acesso negado")) {
+                document.body.innerHTML = "<h1>Acesso negado: Você já jogou hoje 😅!</h1>";
+            } else {
+                location.reload();
+            }
+        } else {
+            document.getElementById("game").style.display = "block";
+        }
+    } catch (error) {
+        alert("Erro de conexão com o servidor: " + error.message);
+    }
+}
 
         function generateSessionId() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -136,35 +145,45 @@
         checkAccess();
 
         async function playGame() {
-            const response = await fetch('https://bolao-animal-game.workers.dev/', {
-                method: 'POST',
-                body: JSON.stringify({ action: 'play', sessionId }),
-                headers: { 'Content-Type': 'application/json' },
-            });
+    try {
+        const response = await fetch('https://bolao-animal-game.workers.dev/', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'play', sessionId }),
+            headers: { 'Content-Type': 'application/json' },
+        });
 
-            const data = await response.json();
-            if (data.error) {
-                alert(data.error);
-                document.getElementById("playButton").style.display = "none";
-                return;
-            }
-
-            function revealNumber(index) {
-                if (index < data.numbers.length) {
-                    let slot = document.getElementById("slot" + (index + 1));
-                    slot.classList.add("spin");
-                    setTimeout(() => {
-                        slot.innerText = data.numbers[index];
-                        slot.classList.remove("spin");
-                        revealNumber(index + 1);
-                    }, 500);
-                } else {
-                    updateGame(data);
-                }
-            }
-            revealNumber(0);
+        if (!response.ok) {
+            alert("Erro ao jogar: " + response.status);
+            document.getElementById("playButton").style.display = "none";
+            return;
         }
 
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            document.getElementById("playButton").style.display = "none";
+            return;
+        }
+
+        function revealNumber(index) {
+            if (index < data.numbers.length) {
+                let slot = document.getElementById("slot" + (index + 1));
+                slot.classList.add("spin");
+                setTimeout(() => {
+                    slot.innerText = data.numbers[index];
+                    slot.classList.remove("spin");
+                    revealNumber(index + 1);
+                }, 500);
+            } else {
+                updateGame(data);
+            }
+        }
+        revealNumber(0);
+    } catch (error) {
+        alert("Erro de conexão com o servidor: " + error.message);
+        document.getElementById("playButton").style.display = "none";
+    }
+}
         function updateGame(data) {
             document.getElementById("attempts").innerText = data.attemptsLeft;
             document.getElementById("result").innerText = data.message;
