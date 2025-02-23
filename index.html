@@ -1,91 +1,187 @@
-<script>
-    function setDate() {
-        const dateElement = document.getElementById("dateDisplay");
-        const now = new Date();
-        const formattedDate = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
-        dateElement.textContent = formattedDate;
-    }
-    setDate();
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jackpot do Bolão Animal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #ffffff;
+            color: #1E3A8A;
+            padding: 50px;
+        }
+        h1 {
+            font-size: 50px;
+            color: #2563EB;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
 
-    async function checkAccess() {
-        let inputCode = prompt("Digite o código de acesso:");
-        const sessionId = generateSessionId();
+        #header {
+            text-align: center;
+        }
+        #dateDisplay {
+            font-size: 14px;
+            color: #1E3A8A;
+            display: block;
+            margin-top: 5px;
+        }
+        #playButton {
+            font-size: 24px;
+            padding: 15px 30px;
+            background-color: #1E40AF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        #game {
+            display: none;
+        }
+        #slot-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .slot {
+            width: 80px;
+            height: 80px;
+            font-size: 48px;
+            font-weight: bold;
+            background-color: #93C5FD;
+            color: #1E3A8A;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.5s ease-in-out;
+        }
+        .slot.spin {
+            transform: rotateX(360deg);
+        }
+        @keyframes winBackground {
+            0% { background-color: #ffffff; }
+            33% { background-color: #ffeb3b; }
+            66% { background-color: #ffffff; }
+            100% { background-color: #ffeb3b; }
+        }
+        .win-animation {
+            animation: winBackground 3s ease-in-out 5;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <img src="BA.png" alt="BA - Jackpot do Bolão Animal" width="150">
+        <span id="dateDisplay"></span>
+    </div>
+    <h1>Jackpot do @bolao.animal</h1>
 
-        const response = await fetch('/.netlify/functions/game', {
-            method: 'POST',
-            body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
-            headers: { 'Content-Type': 'application/json' },
-        });
+    <div id="game">
+        <p>Tentativas restantes: <span id="attempts">5</span></p>
+        <div id="slot-container">
+            <div class="slot" id="slot1">?</div>
+            <div class="slot" id="slot2">?</div>
+            <div class="slot" id="slot3">?</div>
+        </div>
+        <button id="playButton" onclick="playGame()">Jogar</button>
+        <p id="result"></p>
+    </div>
+    
+    <script>
+        function setDate() {
+            const dateElement = document.getElementById("dateDisplay");
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString("pt-BR") + " " + now.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+            dateElement.textContent = formattedDate;
+        }
+        setDate();
 
-        const data = await response.json();
-        if (data.error) {
-            alert(data.error);
-            if (data.error.includes("Acesso negado")) {
-                document.body.innerHTML = "<h1>Acesso negado: Você já jogou hoje 😅!</h1>";
+        async function checkAccess() {
+            let inputCode = prompt("Digite o código de acesso:");
+            const sessionId = generateSessionId();
+
+            const response = await fetch('https://bolao-animal-game.workers.dev/', {
+                method: 'POST',
+                body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+                if (data.error.includes("Acesso negado")) {
+                    document.body.innerHTML = "<h1>Acesso negado: Você já jogou hoje 😅!</h1>";
+                } else {
+                    location.reload();
+                }
             } else {
-                location.reload();
-            }
-        } else {
-            document.getElementById("game").style.display = "block";
-        }
-    }
-
-    function generateSessionId() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-
-    let sessionId = generateSessionId();
-    checkAccess();
-
-    async function playGame() {
-        const response = await fetch('/.netlify/functions/game', {
-            method: 'POST',
-            body: JSON.stringify({ action: 'play', sessionId }),
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        const data = await response.json();
-        if (data.error) {
-            alert(data.error);
-            document.getElementById("playButton").style.display = "none";
-            return;
-        }
-
-        function revealNumber(index) {
-            if (index < data.numbers.length) {
-                let slot = document.getElementById("slot" + (index + 1));
-                slot.classList.add("spin");
-                setTimeout(() => {
-                    slot.innerText = data.numbers[index];
-                    slot.classList.remove("spin");
-                    revealNumber(index + 1);
-                }, 500);
-            } else {
-                updateGame(data);
+                document.getElementById("game").style.display = "block";
             }
         }
-        revealNumber(0);
-    }
 
-    function updateGame(data) {
-        document.getElementById("attempts").innerText = data.attemptsLeft;
-        document.getElementById("result").innerText = data.message;
-        if (data.win) {
-            document.getElementById("playButton").style.display = "none";
-            showVictoryAnimation();
-        } else if (data.attemptsLeft <= 0) {
-            document.getElementById("playButton").style.display = "none";
+        function generateSessionId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
         }
-    }
 
-    function showVictoryAnimation() {
-        document.body.classList.add("win-animation");
-        setTimeout(() => {
-            document.body.classList.remove("win-animation");
-        }, 5000);
-    }
-</script>
+        let sessionId = generateSessionId();
+        checkAccess();
+
+        async function playGame() {
+            const response = await fetch('https://bolao-animal-game.workers.dev/', {
+                method: 'POST',
+                body: JSON.stringify({ action: 'play', sessionId }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+                document.getElementById("playButton").style.display = "none";
+                return;
+            }
+
+            function revealNumber(index) {
+                if (index < data.numbers.length) {
+                    let slot = document.getElementById("slot" + (index + 1));
+                    slot.classList.add("spin");
+                    setTimeout(() => {
+                        slot.innerText = data.numbers[index];
+                        slot.classList.remove("spin");
+                        revealNumber(index + 1);
+                    }, 500);
+                } else {
+                    updateGame(data);
+                }
+            }
+            revealNumber(0);
+        }
+
+        function updateGame(data) {
+            document.getElementById("attempts").innerText = data.attemptsLeft;
+            document.getElementById("result").innerText = data.message;
+            if (data.win) {
+                document.getElementById("playButton").style.display = "none";
+                showVictoryAnimation();
+            } else if (data.attemptsLeft <= 0) {
+                document.getElementById("playButton").style.display = "none";
+            }
+        }
+
+        function showVictoryAnimation() {
+            document.body.classList.add("win-animation");
+            setTimeout(() => {
+                document.body.classList.remove("win-animation");
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
