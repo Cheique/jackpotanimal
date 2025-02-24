@@ -210,11 +210,16 @@ async function playGame() {
             if (index >= slots.length) return;
             
             slots[index].classList.add("spin");
+            
+            setTimeout(() => {
+                slots[index].innerText = "?"; // Breve reset visual antes de mostrar o número
+            }, 250);
+            
             setTimeout(() => {
                 slots[index].classList.remove("spin");
                 slots[index].innerText = data.numbers[index];
                 revealNumber(index + 1);
-            }, 500);
+            }, 700);
         }
 
         revealNumber(0);
