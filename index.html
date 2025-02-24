@@ -198,15 +198,25 @@
                     document.getElementById("playButton").style.display = "none";
                     return;
                 }
-
-                document.getElementById("attempts").innerText = data.attemptsLeft;
-                document.getElementById("result").innerText = data.message;
-
-                if (data.attemptsLeft <= 0 || data.win) {
-                    document.getElementById("playButton").style.display = "none";
-                }
-            } catch (error) {
-                alert("Erro de conexão com o servidor: " + error.message);
+                // Atualiza os números nos slots
+                        document.getElementById("slot1").innerText = data.numbers[0];
+                        document.getElementById("slot2").innerText = data.numbers[1];
+                        document.getElementById("slot3").innerText = data.numbers[2];
+                
+                        // Adiciona animação de rotação nos slots
+                        document.querySelectorAll(".slot").forEach(slot => {
+                            slot.classList.add("spin");
+                            setTimeout(() => slot.classList.remove("spin"), 500);
+                        });
+                
+                        document.getElementById("attempts").innerText = data.attemptsLeft;
+                        document.getElementById("result").innerText = data.message;
+                
+                        if (data.attemptsLeft <= 0 || data.win) {
+                                    document.getElementById("playButton").style.display = "none";
+                    }
+                 } catch (error) {
+                      alert("Erro de conexão com o servidor: " + error.message);
             }
         }
     </script>
