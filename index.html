@@ -77,7 +77,7 @@
             align-items: center;
             border-radius: 10px;
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.2s ease-in-out;
         }
         .slot.spin {
             transform: rotateX(360deg);
@@ -220,13 +220,13 @@ async function playGame() {
             
             setTimeout(() => {
                 slots[index].innerText = "?";
-            }, 250);
+            }, 200);
             
             setTimeout(() => {
                 slots[index].classList.remove("spin");
                 slots[index].innerText = data.numbers[index];
                 revealNumber(index + 1);
-            }, 250 + index * 250); // Adiciona um atraso progressivo para cada slot
+            }, 200 + index * 200); // Adiciona um atraso progressivo para cada slot
         }
 
         revealNumber(0);
