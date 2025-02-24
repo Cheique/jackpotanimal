@@ -206,7 +206,15 @@ async function playGame() {
         ];
 
         function revealNumber(index) {
-            if (index >= slots.length) return;
+            if (index >= slots.length) {
+                // Atualiza as mensagens apenas após o último número ser revelado
+                document.getElementById("attempts").innerText = data.attemptsLeft;
+                document.getElementById("result").innerText = data.message;
+                if (data.attemptsLeft <= 0 || data.win) {
+                    document.getElementById("playButton").style.display = "none";
+                }
+                return;
+            }
             
             slots[index].classList.add("spin");
             
@@ -218,17 +226,10 @@ async function playGame() {
                 slots[index].classList.remove("spin");
                 slots[index].innerText = data.numbers[index];
                 revealNumber(index + 1);
-            }, 500 + index * 500); // Adiciona um atraso progressivo para cada slot
+            }, 250 + index * 250); // Adiciona um atraso progressivo para cada slot
         }
 
         revealNumber(0);
-
-        document.getElementById("attempts").innerText = data.attemptsLeft;
-        document.getElementById("result").innerText = data.message;
-
-        if (data.attemptsLeft <= 0 || data.win) {
-            document.getElementById("playButton").style.display = "none";
-        }
     } catch (error) {
         alert("Erro de conexão com o servidor: " + error.message);
     }
