@@ -101,89 +101,100 @@
         }
         setDate();
 
-        async function checkAccess() {
-    let inputCode = prompt("Digite o código de acesso:");
-    const sessionId = generateSessionId();
-
-    try {
-        const response = await fetch('https://bolao-animal.bolaoanimal.workers.dev/', {
-            method: 'POST',
-            body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!response.ok) {
-            alert("Erro ao verificar o acesso: " + response.status);
-            return;
-        }
-
-        const data = await response.json();
-        if (data.error) {
-            alert(data.error);
-            if (data.error.includes("Acesso negado")) {
-                document.body.innerHTML = "<h1>Acesso negado: Você já jogou hoje 😅!</h1>";
-            } else {
-                location.reload();
+        // Função para gerar e persistir o sessionId usando localStorage
+        function getSessionId() {
+            let sessionId = localStorage.getItem('userSessionId');
+            if (!sessionId) {
+                sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('userSessionId', sessionId);
             }
-        } else {
-            document.getElementById("game").style.display = "block";
-        }
-    } catch (error) {
-        alert("Erro de conexão com o servidor: " + error.message);
-    }
-}
-
-        function generateSessionId() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
+            console.log('Session ID usado:', sessionId); // Log para depuração
+            return sessionId;
         }
 
-        let sessionId = generateSessionId();
-        checkAccess();
+        async function checkAccess() {
+            let inputCode = prompt("Digite o código de acesso:");
+            const sessionId = getSessionId(); // Usa o sessionId persistente
+
+            try {
+                const response = await fetch('https://bolao-animal.bolaoanimal.workers.dev/', {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'checkAccess', code: inputCode, sessionId }),
+                    headers: { 'Content-Type': 'application/json' },
+                });
+
+                if (!response.ok) {
+                    alert("Erro ao verificar o acesso: " + response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                    if (data.error.includes("Acesso negado: Você já jogou hoje!")) {
+                        document.getElementById("game").style.display = "none"; // Esconde o jogo
+                        document.body.innerHTML = "<h1>Acesso negado: Você já jogou hoje 😅!</h1>";
+                    } else {
+                        location.reload(); // Recarrega a página para tentar novamente
+                    }
+                } else {
+                    document.getElementById("game").style.display = "block"; // Mostra o jogo
+                }
+            } catch (error) {
+                alert("Erro de conexão com o servidor: " + error.message);
+            }
+        }
+
+        // Chama checkAccess ao carregar a página
+        window.onload = checkAccess;
 
         async function playGame() {
-    try {
-        const response = await fetch('https://bolao-animal.bolaoanimal.workers.dev/', {
-            method: 'POST',
-            body: JSON.stringify({ action: 'play', sessionId }),
-            headers: { 'Content-Type': 'application/json' },
-        });
+            const sessionId = getSessionId(); // Usa o sessionId persistente
 
-        if (!response.ok) {
-            alert("Erro ao jogar: " + response.status);
-            document.getElementById("playButton").style.display = "none";
-            return;
-        }
+            try {
+                const response = await fetch('https://bolao-animal.bolaoanimal.workers.dev/', {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'play', sessionId }),
+                    headers: { 'Content-Type': 'application/json' },
+                });
 
-        const data = await response.json();
-        if (data.error) {
-            alert(data.error);
-            document.getElementById("playButton").style.display = "none";
-            return;
-        }
+                if (!response.ok) {
+                    alert("Erro ao jogar: " + response.status);
+                    document.getElementById("playButton").style.display = "none";
+                    return;
+                }
 
-        function revealNumber(index) {
-            if (index < data.numbers.length) {
-                let slot = document.getElementById("slot" + (index + 1));
-                slot.classList.add("spin");
-                setTimeout(() => {
-                    slot.innerText = data.numbers[index];
-                    slot.classList.remove("spin");
-                    revealNumber(index + 1);
-                }, 500);
-            } else {
-                updateGame(data);
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                    document.getElementById("playButton").style.display = "none";
+                    return;
+                }
+
+                function revealNumber(index) {
+                    if (index < data.numbers.length) {
+                        let slot = document.getElementById("slot" + (index + 1));
+                        slot.classList.add("spin");
+                        setTimeout(() => {
+                            slot.innerText = data.numbers[index];
+                            slot.classList.remove("spin");
+                            revealNumber(index + 1);
+                        }, 500);
+                    } else {
+                        updateGame(data);
+                    }
+                }
+                revealNumber(0);
+            } catch (error) {
+                alert("Erro de conexão com o servidor: " + error.message);
+                document.getElementById("playButton").style.display = "none";
             }
         }
-        revealNumber(0);
-    } catch (error) {
-        alert("Erro de conexão com o servidor: " + error.message);
-        document.getElementById("playButton").style.display = "none";
-    }
-}
+
         function updateGame(data) {
             document.getElementById("attempts").innerText = data.attemptsLeft;
             document.getElementById("result").innerText = data.message;
