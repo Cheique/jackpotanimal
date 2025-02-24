@@ -205,21 +205,20 @@ async function playGame() {
             document.getElementById("slot3")
         ];
 
-        // Função para girar e mostrar um número por vez
         function revealNumber(index) {
             if (index >= slots.length) return;
             
             slots[index].classList.add("spin");
             
             setTimeout(() => {
-                slots[index].innerText = "?"; // Breve reset visual antes de mostrar o número
+                slots[index].innerText = "?";
             }, 250);
             
             setTimeout(() => {
                 slots[index].classList.remove("spin");
                 slots[index].innerText = data.numbers[index];
                 revealNumber(index + 1);
-            }, 700);
+            }, 500 + index * 500); // Adiciona um atraso progressivo para cada slot
         }
 
         revealNumber(0);
