@@ -118,17 +118,6 @@
             dateElement.textContent = formattedDate;
         }
         setDate();
-        
-        function getSessionId(email) {
-            let savedEmail = localStorage.getItem("userEmail");
-            let sessionId = localStorage.getItem("userSessionId");
-
-            if (!sessionId || email !== savedEmail) {
-                sessionId = generateUUID();
-                localStorage.setItem("userSessionId", sessionId);
-            }
-            return sessionId;
-        }
 
         function generateUUID() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -138,6 +127,22 @@
             });
         }
 
+        function getSessionId(email) {
+            const savedEmail = localStorage.getItem("userEmail");
+            let sessionId;
+
+            // Gera um novo sessionId se o e-mail mudou ou não existe sessionId
+            if (!savedEmail || email !== savedEmail) {
+                sessionId = generateUUID();
+                localStorage.setItem("userSessionId", sessionId);
+                localStorage.setItem("userEmail", email);
+            } else {
+                sessionId = localStorage.getItem("userSessionId") || generateUUID();
+                localStorage.setItem("userSessionId", sessionId);
+            }
+            return sessionId;
+        }
+
         function saveEmail() {
             const email = document.getElementById("emailInput").value.trim();
             if (!email || !email.includes("@")) {
@@ -145,13 +150,13 @@
                 return;
             }
             localStorage.setItem("userEmail", email);
-            getSessionId(email);
+            getSessionId(email); // Gera ou atualiza o sessionId
             document.getElementById("emailContainer").style.display = "none";
             checkAccess();
         }
 
         async function checkAccess() {
-            let inputCode = prompt("Digite o código de acesso:");
+            const inputCode = prompt("Digite o código de acesso:");
             const email = localStorage.getItem("userEmail");
             const sessionId = getSessionId(email);
 
